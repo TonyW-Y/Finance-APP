@@ -2,9 +2,12 @@ import { Tabs } from 'expo-router';
 import { LayoutDashboard, ArrowLeftRight, Target, Wallet, User } from 'lucide-react-native';
 import { useTheme } from '@/context/ThemeContext';
 import { ACCENT } from '@/constants';
+import { Platform, SafeAreaView } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function TabLayout() {
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
 
   return (
     <Tabs
@@ -14,14 +17,15 @@ export default function TabLayout() {
           backgroundColor: colors.surface,
           borderTopColor: colors.border,
           borderTopWidth: 1,
-          height: 60,
-          paddingBottom: 8,
-          paddingTop: 6,
+          height: 60 + (Platform.OS === 'ios' ? Math.max(insets.bottom, 20) : 8),
+          paddingBottom: Platform.OS === 'ios' ? Math.max(insets.bottom, 12) : 8,
+          paddingTop: 8,
         },
         tabBarActiveTintColor: ACCENT.blue,
         tabBarInactiveTintColor: colors.textSecondary,
         tabBarLabelStyle: { fontSize: 11, fontWeight: '500' },
       }}>
+      {/* Your tab screens remain the same */}
       <Tabs.Screen
         name="index"
         options={{
