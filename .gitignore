@@ -29,7 +29,13 @@ yarn-error.*
 
 # local env files
 .env*.local
-.env
+
+# python / backend
+backend/.env
+backend/.venv/
+backend/__pycache__/
+backend/*.db
+backend/app/**/__pycache__/
 
 # typescript
 *.tsbuildinfo
