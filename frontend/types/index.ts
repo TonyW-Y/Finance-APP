@@ -30,8 +30,8 @@ export interface Budget {
 export interface Goal {
   id: string;
   name: string;
-  targetAmount: number;
-  savedAmount: number;
+  target_amount: number;
+  saved_amount: number;
 }
 
 export interface Subscription {

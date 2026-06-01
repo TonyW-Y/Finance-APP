@@ -10,7 +10,7 @@ import { useAuth } from '@/context/AuthContext';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { BudgetCard } from '@/components/BudgetCard';
 import { getBudgets, createBudget, deleteBudget } from '@/lib/api';
-import { CATEGORIES, CATEGORY_COLORS, ACCENT } from '@/constants';
+import { EXPENSE_CATEGORIES, CATEGORY_COLORS, ACCENT } from '@/constants';
 import { Budget, Category } from '@/types';
 
 export default function BudgetsScreen() {
@@ -113,7 +113,7 @@ export default function BudgetsScreen() {
 
             {showCatPicker && (
               <View style={[styles.catDropdown, { backgroundColor: colors.inputBackground, borderColor: colors.border }]}>
-                {CATEGORIES.map((c) => (
+                {EXPENSE_CATEGORIES.map((c) => (
                   <TouchableOpacity key={c} style={styles.catOption} onPress={() => { setCategory(c); setShowCatPicker(false); }}>
                     <View style={[styles.catDot, { backgroundColor: CATEGORY_COLORS[c] }]} />
                     <Text style={[styles.catOptionText, { color: colors.textPrimary }]}>{c}</Text>

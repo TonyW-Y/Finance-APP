@@ -1,6 +1,17 @@
+import { Platform } from 'react-native';
 import { Category } from '@/types';
 
-export const API_URL = 'http://localhost:8000';
+const getApiUrl = () => {
+  if (__DEV__) {
+    if (Platform.OS === 'android') {
+      return 'http://10.0.2.2:8000';
+    }
+    return 'http://localhost:8000';
+  }
+  return 'http://localhost:8000';
+};
+
+export const API_URL = getApiUrl();
 
 export const CATEGORIES: Category[] = [
   'Food',
@@ -13,6 +24,34 @@ export const CATEGORIES: Category[] = [
   'Freelance',
   'Other',
 ];
+
+export const INCOME_CATEGORIES: Category[] = ['Salary', 'Freelance'];
+export const EXPENSE_CATEGORIES: Category[] = [
+  'Food',
+  'Transport',
+  'Housing',
+  'Entertainment',
+  'Health',
+  'Shopping',
+];
+export const BOTH_CATEGORIES: Category[] = ['Other'];
+
+export function getCategoriesForType(type: 'income' | 'expense'): Category[] {
+  const base = type === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
+  return [...base, ...BOTH_CATEGORIES];
+}
+
+export const CATEGORY_IS_EXPENSE: Record<Category, boolean> = {
+  Food: true,
+  Transport: true,
+  Housing: true,
+  Entertainment: true,
+  Health: true,
+  Shopping: true,
+  Salary: false,
+  Freelance: false,
+  Other: true,
+};
 
 export const CATEGORY_COLORS: Record<Category, string> = {
   Food: '#F4845F',

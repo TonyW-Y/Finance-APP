@@ -10,7 +10,7 @@ import { useAuth } from '@/context/AuthContext';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { TransactionItem } from '@/components/TransactionItem';
 import { getTransactions, createTransaction, deleteTransaction, getBudgets, getRoast } from '@/lib/api';
-import { CATEGORIES, CATEGORY_COLORS, ACCENT } from '@/constants';
+import { CATEGORY_COLORS, ACCENT, getCategoriesForType, CATEGORY_IS_EXPENSE } from '@/constants';
 import { Transaction, TransactionType, Category, Budget } from '@/types';
 
 type Filter = 'all' | 'income' | 'expense';
@@ -36,6 +36,24 @@ export default function TransactionsScreen() {
   const [category, setCategory] = useState<Category>('Food');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [showCatPicker, setShowCatPicker] = useState(false);
+
+  const handleTypeChange = (t: TransactionType) => {
+    setType(t);
+    const cats = getCategoriesForType(t);
+    if (!cats.includes(category)) {
+      setCategory(cats[0]);
+    }
+  };
+
+  const handleCategoryChange = (c: Category) => {
+    setCategory(c);
+    if (CATEGORY_IS_EXPENSE[c] && type === 'income') {
+      setType('expense');
+    } else if (!CATEGORY_IS_EXPENSE[c] && type === 'expense') {
+      setType('income');
+    }
+    setShowCatPicker(false);
+  };
 
   const load = useCallback(async () => {
     if (!token) return;
@@ -148,7 +166,7 @@ export default function TransactionsScreen() {
                 <TouchableOpacity
                   key={t}
                   style={[styles.typeBtn, { borderColor: colors.border }, type === t && { backgroundColor: t === 'income' ? ACCENT.green : ACCENT.red, borderColor: 'transparent' }]}
-                  onPress={() => setType(t)}>
+                  onPress={() => handleTypeChange(t)}>
                   <Text style={[styles.typeBtnText, { color: type === t ? '#fff' : colors.textSecondary }]}>
                     {t.charAt(0).toUpperCase() + t.slice(1)}
                   </Text>
@@ -173,8 +191,8 @@ export default function TransactionsScreen() {
 
             {showCatPicker && (
               <View style={[styles.catDropdown, { backgroundColor: colors.inputBackground, borderColor: colors.border }]}>
-                {CATEGORIES.map((c) => (
-                  <TouchableOpacity key={c} style={styles.catOption} onPress={() => { setCategory(c); setShowCatPicker(false); }}>
+                {getCategoriesForType(type).map((c) => (
+                  <TouchableOpacity key={c} style={styles.catOption} onPress={() => handleCategoryChange(c)}>
                     <View style={[styles.catDot, { backgroundColor: CATEGORY_COLORS[c] }]} />
                     <Text style={[styles.catOptionText, { color: colors.textPrimary }]}>{c}</Text>
                   </TouchableOpacity>

@@ -13,7 +13,7 @@ interface GoalCardProps {
 export function GoalCard({ goal, onAddMoney }: GoalCardProps) {
   const { colors } = useTheme();
   const [addAmount, setAddAmount] = useState('');
-  const pct = goal.targetAmount > 0 ? Math.min((goal.savedAmount / goal.targetAmount) * 100, 100) : 0;
+  const pct = goal.target_amount > 0 ? Math.min((goal.saved_amount / goal.target_amount) * 100, 100) : 0;
 
   const handleAdd = () => {
     const n = parseFloat(addAmount);
@@ -34,10 +34,10 @@ export function GoalCard({ goal, onAddMoney }: GoalCardProps) {
       </View>
       <View style={styles.amountsRow}>
         <Text style={[styles.saved, { color: colors.textSecondary }]}>
-          Saved: <Text style={{ color: ACCENT.green }}>${goal.savedAmount.toFixed(2)}</Text>
+          Saved: <Text style={{ color: ACCENT.green }}>${goal.saved_amount.toFixed(2)}</Text>
         </Text>
         <Text style={[styles.target, { color: colors.textSecondary }]}>
-          Target: ${goal.targetAmount.toFixed(2)}
+          Target: ${goal.target_amount.toFixed(2)}
         </Text>
       </View>
       <View style={styles.addRow}>

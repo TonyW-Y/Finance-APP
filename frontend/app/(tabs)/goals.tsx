@@ -42,7 +42,7 @@ export default function GoalsScreen() {
     const saved = parseFloat(savedAmount) || 0;
     if (!token) return;
     try {
-      await createGoal(token, { name: name.trim(), targetAmount: target, savedAmount: saved });
+      await createGoal(token, { name: name.trim(), target_amount: target, saved_amount: saved });
       await load();
       setModalVisible(false);
       resetForm();
@@ -56,7 +56,7 @@ export default function GoalsScreen() {
     const goal = goals.find((g) => g.id === id);
     if (!goal) return;
     try {
-      const updated = await updateGoal(token, id, { savedAmount: goal.savedAmount + amount });
+      const updated = await updateGoal(token, id, { saved_amount: goal.saved_amount + amount });
       setGoals((prev) => prev.map((g) => (g.id === id ? updated : g)));
     } catch {}
   };

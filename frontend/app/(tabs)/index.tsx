@@ -15,21 +15,17 @@ import { Transaction, Subscription, Budget } from '@/types';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-function getLast6MonthsData(transactions: Transaction[]) {
+function getYearData(transactions: Transaction[]) {
   const now = new Date();
-  const months = [];
-  for (let i = 5; i >= 0; i--) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    months.push({ year: d.getFullYear(), month: d.getMonth(), label: MONTHS[d.getMonth()] });
-  }
-  return months.map((m, idx) => {
+  const year = now.getFullYear();
+  return MONTHS.map((label, m) => {
     const total = transactions
       .filter((t) => {
         const d = new Date(t.date);
-        return d.getFullYear() === m.year && d.getMonth() === m.month && t.type === 'expense';
+        return d.getFullYear() === year && d.getMonth() === m && t.type === 'expense';
       })
       .reduce((sum, t) => sum + t.amount, 0);
-    return { label: m.label, value: total, isCurrentMonth: idx === 5 };
+    return { label, value: total, isCurrentMonth: m === now.getMonth() };
   });
 }
 
@@ -110,7 +106,7 @@ export default function OverviewScreen() {
   const recentTransactions = [...transactions]
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
     .slice(0, 5);
-  const chartData = getLast6MonthsData(transactions);
+  const chartData = getYearData(transactions);
 
   const fmt = (n: number) =>
     `$${Math.abs(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
