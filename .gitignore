@@ -1,41 +1,6 @@
-# dependencies
-node_modules/
-
-# expo
-.expo/
-dist/
-web-build/
-expo-env.d.ts
-
-# native
-*.orig.*
-*.jks
-*.p8
-*.p12
-*.key
-*.mobileprovision
-
-# metro
-.metro-health-check*
-
-# debug
-npm-debug.*
-yarn-debug.*
-yarn-error.*
-
-# macos
-.DS_Store
-*.pem
-
-# local env files
-.env*.local
-
 # python / backend
 backend/.env
 backend/.venv/
 backend/__pycache__/
 backend/*.db
 backend/app/**/__pycache__/
-
-# typescript
-*.tsbuildinfo

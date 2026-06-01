@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Sun, Moon } from 'lucide-react-native';
 import { useTheme } from '@/context/ThemeContext';
 
@@ -10,9 +11,10 @@ interface ScreenHeaderProps {
 
 export function ScreenHeader({ title, rightElement }: ScreenHeaderProps) {
   const { colors, isDark, toggleTheme } = useTheme();
+  const insets = useSafeAreaInsets();
 
   return (
-    <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
+    <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border, paddingTop: 14 + insets.top }]}>
       <Text style={[styles.title, { color: colors.textPrimary }]}>{title}</Text>
       <View style={styles.right}>
         {rightElement}

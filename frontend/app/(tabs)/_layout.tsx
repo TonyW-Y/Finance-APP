@@ -2,7 +2,7 @@ import { Tabs } from 'expo-router';
 import { LayoutDashboard, ArrowLeftRight, Target, Wallet, User } from 'lucide-react-native';
 import { useTheme } from '@/context/ThemeContext';
 import { ACCENT } from '@/constants';
-import { Platform, SafeAreaView } from 'react-native';
+import { Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function TabLayout() {
@@ -25,7 +25,6 @@ export default function TabLayout() {
         tabBarInactiveTintColor: colors.textSecondary,
         tabBarLabelStyle: { fontSize: 11, fontWeight: '500' },
       }}>
-      {/* Your tab screens remain the same */}
       <Tabs.Screen
         name="index"
         options={{
