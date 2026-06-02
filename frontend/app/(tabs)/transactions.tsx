@@ -3,7 +3,7 @@ import {
   View, Text, ScrollView, TouchableOpacity, TextInput,
   Modal, StyleSheet, RefreshControl, KeyboardAvoidingView, Platform,
 } from 'react-native';
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { Plus, X, ChevronDown } from 'lucide-react-native';
 import { useTheme } from '@/context/ThemeContext';
 import { useAuth } from '@/context/AuthContext';
@@ -22,6 +22,7 @@ interface RoastUpdate {
 export default function TransactionsScreen() {
   const { colors } = useTheme();
   const { token } = useAuth();
+  const router = useRouter();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [filter, setFilter] = useState<Filter>('all');
@@ -111,7 +112,7 @@ export default function TransactionsScreen() {
       <ScreenHeader
         title="Transactions"
         rightElement={
-          <TouchableOpacity style={[styles.addBtn, { backgroundColor: ACCENT.blue }]} onPress={() => setModalVisible(true)}>
+          <TouchableOpacity style={[styles.addBtn, { backgroundColor: ACCENT.blue }]} onPress={() => { if (!token) { router.replace('/(tabs)/account'); return; } setModalVisible(true); }}>
             <Plus color="#fff" size={18} />
           </TouchableOpacity>
         }

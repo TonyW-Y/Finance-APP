@@ -15,6 +15,12 @@ import { Transaction, Subscription, Budget } from '@/types';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
+function isThisMonth(dateStr: string) {
+  const d = new Date(dateStr);
+  const now = new Date();
+  return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+}
+
 function getYearData(transactions: Transaction[]) {
   const now = new Date();
   const year = now.getFullYear();
@@ -32,6 +38,7 @@ function getYearData(transactions: Transaction[]) {
 function monthlySubCost(subs: Subscription[]) {
   return subs.reduce((sum, s) => {
     if (s.frequency === 'weekly') return sum + s.amount * 4.33;
+    if (s.frequency === 'biweekly') return sum + s.amount * 2.167;
     if (s.frequency === 'yearly') return sum + s.amount / 12;
     return sum + s.amount;
   }, 0);
@@ -99,8 +106,9 @@ export default function OverviewScreen() {
     } catch {}
   };
 
-  const totalIncome = transactions.filter((t) => t.type === 'income').reduce((s, t) => s + t.amount, 0);
-  const totalExpenses = transactions.filter((t) => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+  const thisMonth = transactions.filter((t) => isThisMonth(t.date));
+  const totalIncome = thisMonth.filter((t) => t.type === 'income').reduce((s, t) => s + t.amount, 0);
+  const totalExpenses = thisMonth.filter((t) => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
   const netBalance = totalIncome - totalExpenses;
   const subCost = monthlySubCost(subscriptions);
   const recentTransactions = [...transactions]

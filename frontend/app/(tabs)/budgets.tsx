@@ -3,7 +3,7 @@ import {
   View, Text, ScrollView, TouchableOpacity, TextInput,
   Modal, StyleSheet, RefreshControl, KeyboardAvoidingView, Platform,
 } from 'react-native';
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { Plus, X, Trash2, ChevronDown } from 'lucide-react-native';
 import { useTheme } from '@/context/ThemeContext';
 import { useAuth } from '@/context/AuthContext';
@@ -16,6 +16,7 @@ import { Budget, Category } from '@/types';
 export default function BudgetsScreen() {
   const { colors } = useTheme();
   const { token } = useAuth();
+  const router = useRouter();
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
@@ -62,7 +63,7 @@ export default function BudgetsScreen() {
       <ScreenHeader
         title="Budgets"
         rightElement={
-          <TouchableOpacity style={[styles.addBtn, { backgroundColor: ACCENT.blue }]} onPress={() => setModalVisible(true)}>
+          <TouchableOpacity style={[styles.addBtn, { backgroundColor: ACCENT.blue }]} onPress={() => { if (!token) { router.replace('/(tabs)/account'); return; } setModalVisible(true); }}>
             <Plus color="#fff" size={18} />
           </TouchableOpacity>
         }

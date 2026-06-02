@@ -9,7 +9,7 @@ export type Category =
   | 'Salary'
   | 'Freelance'
   | 'Other';
-export type Frequency = 'weekly' | 'monthly' | 'yearly';
+export type Frequency = 'weekly' | 'biweekly' | 'monthly' | 'yearly';
 
 export interface Transaction {
   id: string;

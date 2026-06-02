@@ -3,7 +3,7 @@ import {
   View, Text, ScrollView, TouchableOpacity, TextInput,
   Modal, StyleSheet, RefreshControl, KeyboardAvoidingView, Platform,
 } from 'react-native';
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { Plus, X, Trash2 } from 'lucide-react-native';
 import { useTheme } from '@/context/ThemeContext';
 import { useAuth } from '@/context/AuthContext';
@@ -16,6 +16,7 @@ import { Goal } from '@/types';
 export default function GoalsScreen() {
   const { colors } = useTheme();
   const { token } = useAuth();
+  const router = useRouter();
   const [goals, setGoals] = useState<Goal[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
@@ -74,7 +75,7 @@ export default function GoalsScreen() {
       <ScreenHeader
         title="Goals"
         rightElement={
-          <TouchableOpacity style={[styles.addBtn, { backgroundColor: ACCENT.green }]} onPress={() => setModalVisible(true)}>
+          <TouchableOpacity style={[styles.addBtn, { backgroundColor: ACCENT.green }]} onPress={() => { if (!token) { router.replace('/(tabs)/account'); return; } setModalVisible(true); }}>
             <Plus color="#fff" size={18} />
           </TouchableOpacity>
         }
