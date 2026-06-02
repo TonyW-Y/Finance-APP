@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, useWindowDimensions } from 'react-native';
 import { useTheme } from '@/context/ThemeContext';
 import { ACCENT } from '@/constants';
 
@@ -19,49 +19,78 @@ function niceMax(value: number): number {
   return Math.ceil(value / (nice * magnitude)) * (nice * magnitude);
 }
 
-function getTicks(max: number, count: number = 4): number[] {
-  const step = max / count;
+function getTicks(max: number): number[] {
   const ticks: number[] = [];
-  for (let i = 0; i <= count; i++) {
+  const step = max / 4;
+  for (let i = 0; i <= 4; i++) {
     ticks.push(Math.round(i * step));
   }
   return ticks;
 }
 
+function formatValue(n: number): string {
+  if (n >= 1_000_000) {
+    const val = n / 1_000_000;
+    return val % 1 === 0 ? `${val}M` : `${val.toFixed(1)}M`;
+  }
+  if (n >= 1_000) {
+    const val = n / 1_000;
+    return val % 1 === 0 ? `${val}k` : `${val.toFixed(1)}k`;
+  }
+  return String(n);
+}
+
+const Y_AXIS_WIDTH = 48;
+const GAP = 6;
+const MIN_BAR_WIDTH = 32;
+
 export function BarChart({ data }: BarChartProps) {
   const { colors } = useTheme();
-  const chartHeight = 150;
-  const barWidth = 32;
+  const { width: screenWidth, height: screenHeight } = useWindowDimensions();
+  const chartHeight = Math.min(Math.max(screenHeight * 0.22, 120), 320);
   const maxVal = niceMax(Math.max(...data.map((d) => d.value), 0));
   const ticks = getTicks(maxVal);
 
-  return (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.scroll}>
-      <View style={styles.chart}>
-        {/* Y-axis labels */}
-        <View style={styles.yAxis}>
-          {ticks.map((t, i) => (
-            <Text key={i} style={[styles.yLabel, { color: colors.textSecondary }]}>
-              ${t >= 1000 ? `${(t / 1000).toFixed(t % 1000 === 0 ? 0 : 1)}k` : t}
-            </Text>
-          ))}
-        </View>
+  const availableWidth = screenWidth - Y_AXIS_WIDTH - 8;
+  const totalGaps = (data.length - 1) * GAP;
+  const fits = data.length * MIN_BAR_WIDTH + totalGaps <= availableWidth;
+  const barWidth = fits
+    ? Math.floor((availableWidth - totalGaps) / data.length)
+    : MIN_BAR_WIDTH;
+  const chartContentWidth = fits ? availableWidth : data.length * barWidth + totalGaps;
 
-        {/* Bars with grid lines */}
-        <View style={styles.chartArea}>
-          {ticks.map((_, i) => (
+  return (
+    <View style={[styles.container, { minHeight: chartHeight + 24 }]}>
+      {/* Y-axis — fixed outside scroll */}
+      <View style={[styles.yAxis, { height: chartHeight, width: Y_AXIS_WIDTH }]}>
+        {[...ticks].reverse().map((t, i) => (
+          <Text key={i} style={[styles.yLabel, { color: colors.textSecondary }]}>
+            ${formatValue(t)}
+          </Text>
+        ))}
+      </View>
+
+      {/* Scrollable bar area */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={styles.scroll}
+        contentContainerStyle={{ width: chartContentWidth }}
+      >
+        <View style={[styles.chartArea, { height: chartHeight, width: chartContentWidth }]}>
+          {[...ticks].reverse().map((_, i) => (
             <View
               key={i}
               style={[
                 styles.gridLine,
                 {
-                  top: (i / ticks.length) * chartHeight,
+                  bottom: (i / (ticks.length - 1)) * chartHeight,
                   backgroundColor: colors.border,
                 },
               ]}
             />
           ))}
-          <View style={styles.barsRow}>
+          <View style={[styles.barsRow, { height: chartHeight, gap: GAP }]}>
             {data.map((item, i) => {
               const barHeight = Math.max((item.value / maxVal) * chartHeight, 2);
               const barColor = item.isCurrentMonth ? '#5599FF' : ACCENT.blue;
@@ -79,7 +108,10 @@ export function BarChart({ data }: BarChartProps) {
                       ]}
                     />
                   </View>
-                  <Text style={[styles.barLabel, { color: colors.textSecondary }]}>
+                  <Text
+                    numberOfLines={1}
+                    style={[styles.barLabel, { color: colors.textSecondary }]}
+                  >
                     {item.label}
                   </Text>
                 </View>
@@ -87,22 +119,23 @@ export function BarChart({ data }: BarChartProps) {
             })}
           </View>
         </View>
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  scroll: { flexGrow: 0, marginTop: 4 },
-  chart: {
+  container: {
     flexDirection: 'row',
-    paddingRight: 8,
+    marginTop: 8,
+    marginLeft: -8,
+  },
+  scroll: {
+    flex: 1,
   },
   yAxis: {
-    width: 36,
-    height: 150,
     justifyContent: 'space-between',
-    paddingRight: 4,
+    paddingRight: 6,
   },
   yLabel: {
     fontSize: 10,
@@ -110,23 +143,19 @@ const styles = StyleSheet.create({
     textAlign: 'right',
   },
   chartArea: {
-    height: 150,
     position: 'relative',
-    justifyContent: 'flex-end',
   },
   gridLine: {
     position: 'absolute',
     left: 0,
     right: 0,
     height: 1,
-    opacity: 0.2,
+    opacity: 0.15,
   },
   barsRow: {
     flexDirection: 'row',
     alignItems: 'flex-end',
-    gap: 6,
     paddingHorizontal: 2,
-    height: 150,
   },
   barColumn: {
     alignItems: 'center',
