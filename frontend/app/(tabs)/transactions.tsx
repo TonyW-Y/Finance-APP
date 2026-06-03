@@ -4,30 +4,27 @@ import {
   Modal, StyleSheet, RefreshControl, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { Plus, X, ChevronDown } from 'lucide-react-native';
+import { Plus, X, ChevronDown, Search, Calendar } from 'lucide-react-native';
+import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { useTheme } from '@/context/ThemeContext';
 import { useAuth } from '@/context/AuthContext';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { TransactionItem } from '@/components/TransactionItem';
-import { getTransactions, createTransaction, deleteTransaction, getBudgets, getRoast } from '@/lib/api';
-import { CATEGORY_COLORS, ACCENT, getCategoriesForType, CATEGORY_IS_EXPENSE } from '@/constants';
-import { Transaction, TransactionType, Category, Budget } from '@/types';
+import { getTransactions, createTransaction, deleteTransaction } from '@/lib/api';
+import { CATEGORY_COLORS, ACCENT, getCategoriesForType, CATEGORY_IS_EXPENSE, CATEGORIES } from '@/constants';
+import { Transaction, TransactionType, Category } from '@/types';
 
 type Filter = 'all' | 'income' | 'expense';
-
-interface RoastUpdate {
-  roast: string;
-}
 
 export default function TransactionsScreen() {
   const { colors } = useTheme();
   const { token } = useAuth();
   const router = useRouter();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [budgets, setBudgets] = useState<Budget[]>([]);
   const [filter, setFilter] = useState<Filter>('all');
+  const [search, setSearch] = useState('');
+  const [catFilter, setCatFilter] = useState('');
   const [refreshing, setRefreshing] = useState(false);
-  const [latestRoast, setLatestRoast] = useState<string | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [error, setError] = useState('');
 
@@ -37,6 +34,7 @@ export default function TransactionsScreen() {
   const [category, setCategory] = useState<Category>('Food');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [showCatPicker, setShowCatPicker] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
   const handleTypeChange = (t: TransactionType) => {
     setType(t);
@@ -59,11 +57,14 @@ export default function TransactionsScreen() {
   const load = useCallback(async () => {
     if (!token) return;
     try {
-      const [txns, bdgs] = await Promise.all([getTransactions(token), getBudgets(token)]);
+      const filters: any = {};
+      if (filter !== 'all') filters.type = filter;
+      if (search) filters.search = search;
+      if (catFilter) filters.category = catFilter;
+      const txns = await getTransactions(token, filters);
       setTransactions(txns);
-      setBudgets(bdgs);
     } catch {}
-  }, [token]);
+  }, [token, filter, search, catFilter]);
 
   useFocusEffect(useCallback(() => { load(); }, [load]));
 
@@ -82,13 +83,6 @@ export default function TransactionsScreen() {
     try {
       await createTransaction(token, { description: desc.trim(), amount: n, type, category, date });
       await load();
-
-      // Get a fresh roast from the "chef"
-      try {
-        const roast = await getRoast(token, transactions, budgets);
-        setLatestRoast(roast);
-      } catch {}
-
       setModalVisible(false);
       resetForm();
     } catch (e: any) {
@@ -101,11 +95,12 @@ export default function TransactionsScreen() {
     try { await deleteTransaction(token, id); setTransactions((prev) => prev.filter((t) => t.id !== id)); } catch {}
   };
 
-  const dismissRoast = () => setLatestRoast(null);
-
-  const filtered = transactions
-    .filter((t) => filter === 'all' || t.type === filter)
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  const onDateChange = (_: DateTimePickerEvent, selected?: Date) => {
+    setShowDatePicker(false);
+    if (selected) {
+      setDate(selected.toISOString().split('T')[0]);
+    }
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -118,37 +113,62 @@ export default function TransactionsScreen() {
         }
       />
 
-      <View style={[styles.filterBar, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
+      {/* Search */}
+      <View style={[styles.searchBar, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
+        <Search color={colors.textSecondary} size={16} />
+        <TextInput
+          style={[styles.searchInput, { color: colors.textPrimary }]}
+          placeholder="Search transactions..." placeholderTextColor={colors.textSecondary}
+          value={search} onChangeText={setSearch} />
+        {search ? (
+          <TouchableOpacity onPress={() => setSearch('')}>
+            <X color={colors.textSecondary} size={16} />
+          </TouchableOpacity>
+        ) : null}
+      </View>
+
+      {/* Type tabs */}
+      <View style={[styles.typeTabs, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
         {(['all', 'income', 'expense'] as Filter[]).map((f) => (
           <TouchableOpacity
             key={f}
-            style={[styles.filterBtn, filter === f && { backgroundColor: ACCENT.blue }]}
+            style={[styles.typeTab, filter === f && { borderBottomColor: f === 'income' ? ACCENT.green : f === 'expense' ? ACCENT.red : ACCENT.blue, borderBottomWidth: 2 }]}
             onPress={() => setFilter(f)}>
-            <Text style={[styles.filterText, { color: filter === f ? '#fff' : colors.textSecondary }]}>
+            <Text style={[styles.typeTabText, { color: filter === f ? (f === 'income' ? ACCENT.green : f === 'expense' ? ACCENT.red : colors.textPrimary) : colors.textSecondary }]}>
               {f.charAt(0).toUpperCase() + f.slice(1)}
             </Text>
           </TouchableOpacity>
         ))}
       </View>
 
-      {latestRoast && (
-        <TouchableOpacity
-          style={[styles.roastBanner, { backgroundColor: ACCENT.roast + '22', borderColor: ACCENT.roast + '44' }]}
-          onPress={dismissRoast}
-          activeOpacity={0.8}>
-          <Text style={[styles.roastText, { color: colors.textPrimary }]} numberOfLines={2}>{latestRoast}</Text>
-          <X color={ACCENT.roast} size={16} />
-        </TouchableOpacity>
-      )}
+      {/* Category filter chips */}
+      <View style={[styles.catBar, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          <TouchableOpacity
+            style={[styles.catChip, { backgroundColor: !catFilter ? colors.inputBackground : colors.surface, borderColor: colors.border }]}
+            onPress={() => setCatFilter('')}>
+            <Text style={[styles.catChipText, { color: !catFilter ? ACCENT.blue : colors.textSecondary, fontWeight: !catFilter ? '700' : '500' }]}>All</Text>
+          </TouchableOpacity>
+          {CATEGORIES.map((c) => (
+            <TouchableOpacity
+              key={c}
+              style={[styles.catChip, { backgroundColor: catFilter === c ? CATEGORY_COLORS[c] : colors.inputBackground, borderColor: colors.border }]}
+              onPress={() => setCatFilter(catFilter === c ? '' : c)}>
+              <View style={[styles.catChipDot, { backgroundColor: CATEGORY_COLORS[c] }]} />
+              <Text style={[styles.catChipText, { color: catFilter === c ? '#fff' : colors.textPrimary, fontWeight: catFilter === c ? '600' : '500' }]}>{c}</Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      </View>
 
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.content}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.textSecondary} />}>
-        {filtered.length === 0 ? (
+        {transactions.length === 0 ? (
           <Text style={[styles.empty, { color: colors.textSecondary }]}>No transactions found</Text>
         ) : (
-          filtered.map((t) => <TransactionItem key={t.id} transaction={t} onDelete={handleDelete} />)
+          transactions.map((t) => <TransactionItem key={t.id} transaction={t} onDelete={handleDelete} />)
         )}
       </ScrollView>
 
@@ -179,8 +199,22 @@ export default function TransactionsScreen() {
               placeholder="Description" placeholderTextColor={colors.textSecondary} value={desc} onChangeText={setDesc} />
             <TextInput style={[styles.input, { backgroundColor: colors.inputBackground, color: colors.textPrimary, borderColor: colors.border }]}
               placeholder="Amount" placeholderTextColor={colors.textSecondary} keyboardType="decimal-pad" value={amount} onChangeText={setAmount} />
-            <TextInput style={[styles.input, { backgroundColor: colors.inputBackground, color: colors.textPrimary, borderColor: colors.border }]}
-              placeholder="Date (YYYY-MM-DD)" placeholderTextColor={colors.textSecondary} value={date} onChangeText={setDate} />
+
+            {/* Date picker */}
+            <TouchableOpacity
+              style={[styles.input, styles.pickerBtn, { backgroundColor: colors.inputBackground, borderColor: colors.border }]}
+              onPress={() => setShowDatePicker(true)}>
+              <Calendar color={colors.textSecondary} size={16} />
+              <Text style={[styles.pickerText, { color: colors.textPrimary }]}>{date}</Text>
+            </TouchableOpacity>
+            {showDatePicker && (
+              <DateTimePicker
+                value={new Date(date)}
+                mode="date"
+                display="default"
+                onChange={onDateChange}
+              />
+            )}
 
             <TouchableOpacity
               style={[styles.input, styles.pickerBtn, { backgroundColor: colors.inputBackground, borderColor: colors.border }]}
@@ -218,24 +252,26 @@ const styles = StyleSheet.create({
   scroll: { flex: 1 },
   content: { paddingHorizontal: 16, paddingBottom: 32 },
   addBtn: { width: 32, height: 32, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
-  filterBar: {
-    flexDirection: 'row',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    gap: 8,
-    borderBottomWidth: 1,
+  searchBar: {
+    flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16,
+    paddingVertical: 8, gap: 8, borderBottomWidth: 1,
   },
-  filterBtn: { paddingHorizontal: 14, paddingVertical: 6, borderRadius: 20 },
-  filterText: { fontSize: 13, fontWeight: '600' },
-  roastBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    gap: 10,
-    borderBottomWidth: 1,
+  searchInput: { flex: 1, fontSize: 14, paddingVertical: 4 },
+  typeTabs: {
+    flexDirection: 'row', borderBottomWidth: 1,
   },
-  roastText: { flex: 1, fontSize: 13, fontStyle: 'italic', fontWeight: '500' },
+  typeTab: { flex: 1, alignItems: 'center', paddingVertical: 10 },
+  typeTabText: { fontSize: 14, fontWeight: '600' },
+  catBar: {
+    paddingHorizontal: 16, paddingVertical: 8, borderBottomWidth: 1,
+  },
+  catChip: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    paddingHorizontal: 10, paddingVertical: 5, borderRadius: 16,
+    borderWidth: 1, marginRight: 6,
+  },
+  catChipDot: { width: 8, height: 8, borderRadius: 4 },
+  catChipText: { fontSize: 12 },
   empty: { textAlign: 'center', fontSize: 14, paddingVertical: 40 },
   modalOverlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.5)' },
   sheet: {

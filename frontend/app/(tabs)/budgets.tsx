@@ -52,10 +52,7 @@ export default function BudgetsScreen() {
 
   const handleDelete = async (cat: string) => {
     if (!token) return;
-    try {
-      await deleteBudget(token, cat);
-      setBudgets((prev) => prev.filter((b) => b.category !== cat));
-    } catch {}
+    try { await deleteBudget(token, cat); setBudgets((prev) => prev.filter((b) => b.category !== cat)); } catch {}
   };
 
   return (

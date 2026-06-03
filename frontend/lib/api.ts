@@ -18,8 +18,18 @@ async function request<T>(url: string, options: RequestInit): Promise<T> {
 }
 
 // Transactions
-export const getTransactions = (token: string): Promise<Transaction[]> =>
-  request(`${API_URL}/transactions`, { headers: authHeaders(token) });
+export const getTransactions = (token: string, filters?: {
+  search?: string; type?: string; category?: string; start_date?: string; end_date?: string;
+}): Promise<Transaction[]> => {
+  const params = new URLSearchParams();
+  if (filters?.search) params.set('search', filters.search);
+  if (filters?.type) params.set('type', filters.type);
+  if (filters?.category) params.set('category', filters.category);
+  if (filters?.start_date) params.set('start_date', filters.start_date);
+  if (filters?.end_date) params.set('end_date', filters.end_date);
+  const qs = params.toString();
+  return request(`${API_URL}/transactions${qs ? `?${qs}` : ''}`, { headers: authHeaders(token) });
+};
 
 export const createTransaction = (token: string, data: Omit<Transaction, 'id'>): Promise<Transaction> =>
   request(`${API_URL}/transactions`, {
@@ -79,6 +89,10 @@ export const createSubscription = (token: string, data: Omit<Subscription, 'id'>
 
 export const deleteSubscription = (token: string, id: string): Promise<void> =>
   request(`${API_URL}/subscriptions/${id}`, { method: 'DELETE', headers: authHeaders(token) });
+
+// Generate recurring from subscriptions
+export const generateSubscriptions = (token: string): Promise<{ transactions: Transaction[] }> =>
+  request(`${API_URL}/subscriptions/generate`, { method: 'POST', headers: authHeaders(token) });
 
 // Roast
 export const getRoast = (token: string, transactions: Transaction[], budgets: Budget[]): Promise<string> =>

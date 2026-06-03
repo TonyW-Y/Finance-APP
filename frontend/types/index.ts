@@ -18,6 +18,7 @@ export interface Transaction {
   type: TransactionType;
   category: Category;
   date: string;
+  subscription_id?: string | null;
 }
 
 export interface Budget {
@@ -39,6 +40,7 @@ export interface Subscription {
   name: string;
   amount: number;
   frequency: Frequency;
+  last_generated?: string | null;
 }
 
 export interface User {

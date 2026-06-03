@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, TextInput,
-  Modal, StyleSheet, KeyboardAvoidingView, Platform,
+  Modal, StyleSheet, KeyboardAvoidingView, Platform, Switch,
 } from 'react-native';
 import { X, CreditCard, User as UserIcon, LogOut, Key, AlertTriangle } from 'lucide-react-native';
 import { useTheme } from '@/context/ThemeContext';
@@ -10,7 +10,7 @@ import { ScreenHeader } from '@/components/ScreenHeader';
 import { ACCENT } from '@/constants';
 
 export default function AccountScreen() {
-  const { colors } = useTheme();
+  const { colors, isDark, toggleTheme } = useTheme();
   const { user, token, login, signup, logout, changePassword, deleteAccount } = useAuth();
 
   // Auth modals
@@ -156,6 +156,17 @@ export default function AccountScreen() {
               <Text style={[styles.userLabel, { color: colors.textSecondary }]}>Signed in</Text>
             </View>
           </View>
+        </View>
+
+        {/* Theme toggle */}
+        <View style={[styles.accountActionBtn, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+          <Text style={[styles.accountActionText, { color: colors.textPrimary, flex: 1 }]}>Dark Mode</Text>
+          <Switch
+            value={isDark}
+            onValueChange={toggleTheme}
+            trackColor={{ false: '#ccc', true: ACCENT.blue + '88' }}
+            thumbColor={isDark ? ACCENT.blue : '#f4f3f4'}
+          />
         </View>
 
         <TouchableOpacity

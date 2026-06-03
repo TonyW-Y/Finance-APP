@@ -63,10 +63,7 @@ export default function SubscriptionsScreen() {
 
   const handleDelete = async (id: string) => {
     if (!token) return;
-    try {
-      await deleteSubscription(token, id);
-      setSubscriptions((prev) => prev.filter((s) => s.id !== id));
-    } catch {}
+    try { await deleteSubscription(token, id); setSubscriptions((prev) => prev.filter((s) => s.id !== id)); } catch {}
   };
 
   const totalMonthly = subscriptions.reduce((s, sub) => s + monthlyAmount(sub), 0);

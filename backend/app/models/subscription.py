@@ -7,3 +7,4 @@ class Subscription(SQLModel, table=True):
     name: str
     amount: float
     frequency: str
+    last_generated: str | None = None

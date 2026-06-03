@@ -37,6 +37,11 @@ export function TransactionItem({ transaction, onDelete }: TransactionItemProps)
           <View style={[styles.badge, { backgroundColor: catColor + '22' }]}>
             <Text style={[styles.badgeText, { color: catColor }]}>{transaction.category}</Text>
           </View>
+          {transaction.subscription_id ? (
+            <View style={[styles.autoBadge, { backgroundColor: ACCENT.blue + '22' }]}>
+              <Text style={[styles.autoBadgeText, { color: ACCENT.blue }]}>Auto</Text>
+            </View>
+          ) : null}
         </View>
       </View>
       <View style={styles.rightSide}>
@@ -98,6 +103,15 @@ const styles = StyleSheet.create({
   badgeText: {
     fontSize: 11,
     fontWeight: '600',
+  },
+  autoBadge: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  autoBadgeText: {
+    fontSize: 10,
+    fontWeight: '700',
   },
   rightSide: {
     alignItems: 'flex-end',

@@ -9,3 +9,4 @@ class Transaction(SQLModel, table=True):
     type: str
     category: str
     date: str
+    subscription_id: int | None = Field(default=None, foreign_key="subscription.id")

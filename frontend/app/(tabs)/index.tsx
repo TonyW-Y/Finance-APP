@@ -7,9 +7,10 @@ import { useAuth } from '@/context/AuthContext';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { SummaryCard } from '@/components/SummaryCard';
 import { BarChart } from '@/components/BarChart';
+import { CategoryBreakdown } from '@/components/CategoryBreakdown';
 import { TransactionItem } from '@/components/TransactionItem';
 import { RoastCard } from '@/components/RoastCard';
-import { getTransactions, getSubscriptions, getBudgets, getWeeklyRoast } from '@/lib/api';
+import { getTransactions, getSubscriptions, getBudgets, getWeeklyRoast, generateSubscriptions } from '@/lib/api';
 import { ACCENT } from '@/constants';
 import { Transaction, Subscription, Budget } from '@/types';
 
@@ -53,11 +54,13 @@ export default function OverviewScreen() {
   const [currentRoast, setCurrentRoast] = useState<string | null>(null);
   const [weeklyRoast, setWeeklyRoast] = useState<string | null>(null);
   const [weeklyModalVisible, setWeeklyModalVisible] = useState(false);
+  const [roastLoading, setRoastLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
   const load = useCallback(async () => {
     if (!token) return;
     try {
+      await generateSubscriptions(token).catch(() => {});
       const [txns, subs, bdgs] = await Promise.all([
         getTransactions(token),
         getSubscriptions(token),
@@ -79,6 +82,10 @@ export default function OverviewScreen() {
 
   const handleWeeklyRoast = async () => {
     if (!token) return;
+    setWeeklyRoast(null);
+    setRoastLoading(true);
+    setWeeklyModalVisible(true);
+
     const weekAgo = new Date();
     weekAgo.setDate(weekAgo.getDate() - 7);
     const weekTxns = transactions.filter((t) => new Date(t.date) >= weekAgo);
@@ -102,8 +109,11 @@ export default function OverviewScreen() {
         transactionCount: weekTxns.length,
       });
       setWeeklyRoast(roast);
-      setWeeklyModalVisible(true);
-    } catch {}
+    } catch {
+      setWeeklyRoast("The roast oven broke. Try again.");
+    } finally {
+      setRoastLoading(false);
+    }
   };
 
   const thisMonth = transactions.filter((t) => isThisMonth(t.date));
@@ -132,7 +142,7 @@ export default function OverviewScreen() {
           style={[styles.weeklyBtn, { backgroundColor: ACCENT.roast + '22', borderColor: ACCENT.roast + '44' }]}
           onPress={handleWeeklyRoast}>
           <Flame color={ACCENT.roast} size={18} />
-          <Text style={[styles.weeklyBtnText, { color: ACCENT.roast }]}>Get Weekly Roast</Text>
+          <Text style={[styles.weeklyBtnText, { color: ACCENT.roast }]}>Get Roasted!</Text>
         </TouchableOpacity>
 
         <View style={styles.grid}>
@@ -157,6 +167,8 @@ export default function OverviewScreen() {
           <BarChart data={chartData} />
         </View>
 
+        <CategoryBreakdown transactions={thisMonth} />
+
         <View style={[styles.section, { backgroundColor: colors.surface, borderColor: colors.border }]}>
           <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Recent Transactions</Text>
           {recentTransactions.length === 0 ? (
@@ -172,12 +184,18 @@ export default function OverviewScreen() {
           <View style={[styles.modalContent, { backgroundColor: colors.surface, borderColor: ACCENT.roast + '66' }]}>
             <View style={styles.modalHeader}>
               <Flame color={ACCENT.roast} size={28} />
-              <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Weekly Roast</Text>
+              <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Get Roasted!</Text>
               <TouchableOpacity onPress={() => setWeeklyModalVisible(false)}>
                 <X color={colors.textSecondary} size={24} />
               </TouchableOpacity>
             </View>
-            <Text style={[styles.roastBody, { color: colors.textPrimary }]}>{weeklyRoast}</Text>
+            {weeklyRoast ? (
+              <Text style={[styles.roastBody, { color: colors.textPrimary }]}>{weeklyRoast}</Text>
+            ) : (
+              <Text style={[styles.loadingBody, { color: colors.textSecondary }]}>
+                Sharpening the knives... 🔪
+              </Text>
+            )}
             <TouchableOpacity
               style={[styles.closeBtn, { backgroundColor: ACCENT.roast }]}
               onPress={() => setWeeklyModalVisible(false)}>
@@ -251,6 +269,12 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     fontWeight: '500',
     fontStyle: 'italic',
+  },
+  loadingBody: {
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
+    paddingVertical: 24,
   },
   closeBtn: {
     paddingVertical: 14,

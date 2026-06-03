@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session, select, func
 
@@ -12,10 +14,13 @@ router = APIRouter(prefix="/budgets", tags=["budgets"])
 
 
 def compute_spent(session: Session, user_id: int, category: str) -> float:
+    now = datetime.now()
+    first_of_month = now.replace(day=1).strftime("%Y-%m-%d")
     stmt = select(func.coalesce(func.sum(Transaction.amount), 0.0)).where(
         Transaction.user_id == user_id,
         Transaction.category == category,
         Transaction.type == "expense",
+        Transaction.date >= first_of_month,
     )
     result = session.exec(stmt).one()
     return float(result)

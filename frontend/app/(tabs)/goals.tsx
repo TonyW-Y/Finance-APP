@@ -64,10 +64,7 @@ export default function GoalsScreen() {
 
   const handleDelete = async (id: string) => {
     if (!token) return;
-    try {
-      await deleteGoal(token, id);
-      setGoals((prev) => prev.filter((g) => g.id !== id));
-    } catch {}
+    try { await deleteGoal(token, id); setGoals((prev) => prev.filter((g) => g.id !== id)); } catch {}
   };
 
   return (
